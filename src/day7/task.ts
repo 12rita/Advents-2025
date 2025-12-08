@@ -3,7 +3,7 @@ import {prepareArrayInput, prepareInput} from "../../utils/prepareInput";
 
 type Point = { x: number; y: number };
 type Cache = { [key: string]: boolean };
-
+type CacheNumeric = { [key: string]: number };
 const getKey = (point: Point) => `${point.x},${point.y}`;
 
 const checkUp = (point: Point, arr: string[][], cache: Cache): boolean => {
@@ -19,42 +19,42 @@ const checkUp = (point: Point, arr: string[][], cache: Cache): boolean => {
     return checkUp({x: point.x, y: point.y - 1}, arr, cache);
 
 }
-const goDown = (point: Point, arr: string[][], sum: number, cache: Cache): void => {
+const goDown = (point: Point, arr: string[][], cache: Cache): void => {
     if (point.x < 0 || point.x > arr[0].length - 1) return;
     if (point.y > arr.length - 1) return;
     const key = getKey(point)
     const pointSym = arr[point.y][point.x];
 
-    if (pointSym === '.') goDown({x: point.x, y: point.y + 1}, arr, sum, cache);
+    if (pointSym === '.') goDown({x: point.x, y: point.y + 1}, arr, cache);
     if (pointSym === '^') {
         if (key in cache) return;
         cache[key] = true;
-        goDown({x: point.x - 1, y: point.y + 1}, arr, sum, cache);
+        goDown({x: point.x - 1, y: point.y + 1}, arr, cache);
         goDown({
             x: point.x + 1,
             y: point.y + 1
-        }, arr, sum, cache)
+        }, arr, cache)
     }
     return;
 }
 
-const goDown2 = (point: Point, arr: string[][], sum: number, cache: Cache): number => {
+const goDown2 = (point: Point, arr: string[][], cache: CacheNumeric): number => {
     if (point.x < 0 || point.x > arr[0].length - 1) return 1;
     if (point.y > arr.length - 1) return 1;
     const key = getKey(point)
     const pointSym = arr[point.y][point.x];
 
-    if (pointSym === '.') return goDown2({x: point.x, y: point.y + 1}, arr, sum, cache);
+    if (pointSym === '.') return goDown2({x: point.x, y: point.y + 1}, arr, cache);
     if (pointSym === '^') {
         if (key in cache) return cache[key];
-        const res = goDown2({x: point.x - 1, y: point.y + 1}, arr, sum, cache) + goDown2({
+        const res = goDown2({x: point.x - 1, y: point.y + 1}, arr,  cache) + goDown2({
             x: point.x + 1,
             y: point.y + 1
-        }, arr, sum, cache)
+        }, arr,  cache)
         cache[key] = res;
         return res
     }
-    return sum;
+    return 0;
 }
 
 
@@ -73,7 +73,7 @@ const findResult1 = (arr: string[][]) => {
             }
         }
     }
-    goDown({x: start.x, y: start.y + 1}, arr, 0, cache)
+    goDown({x: start.x, y: start.y + 1}, arr,  cache)
     return Object.keys(cache).length;
 }
 
@@ -91,7 +91,7 @@ const findResult2 = (arr: string[][]) => {
         }
     }
 
-    return goDown2({x: start.x, y: start.y + 1}, arr, 0, cache)
+    return goDown2({x: start.x, y: start.y + 1}, arr,  cache)
 }
 
 
