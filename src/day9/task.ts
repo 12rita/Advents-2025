@@ -18,7 +18,7 @@ const findResult = (input: string[]) => {
 }
 
 const makeArr = (input: string[]) => {
-    const arr: string[][] = [];
+    const arr: string[] = [];
     let maxX = 0, maxY = 0;
 
     input.forEach(item => {
@@ -28,17 +28,15 @@ const makeArr = (input: string[]) => {
     });
 
     for (let i = 0; i < maxY + 1; i++) {
-        for (let j = 0; j < maxX + 1; j++) {
-            if (!arr[i]) arr[i] = [];
-            arr[i][j] = '.'
-        }
+        arr[i] = '.'.repeat(maxX);
     }
 
 
     input.forEach(item => {
         const [x, y] = item.split(',');
 
-        arr[y][x] = '#';
+        arr[y] = arr[y].substring(0, +x) + '#' + arr[y].substring(+x + 1);
+
     })
 
 
@@ -52,60 +50,50 @@ const makeArr = (input: string[]) => {
 
         for (let i = Math.min(+y1, +y2); i < Math.max(+y1, +y2) + 1; i++) {
             for (let j = Math.min(+x1, +x2); j < Math.max(+x1, +x2) + 1; j++) {
-                arr[i][j] = 'X';
+                arr[i] = arr[i].substring(0, j) + 'X' + arr[i].substring(j + 1);
+
             }
         }
     }
 
-
-    for (let i = 0; i < arr.length; i++) {
-        let start = -1;
-        for (let j = 0; j < arr[0].length; j++) {
-            if (arr[i][j] === 'X') {
-                if (start === -1)
-                    start = j;
-                else {
-                    start = -1;
-                    break;
-                }
-            } else if (arr[i][j] === '.' && start !== -1) {
-                arr[i][j] = 'X';
-            }
-
-        }
-    }
-
-    const coords: { start: number, end: number }[] = [];
     arr.forEach((item, idx) => {
-        const line = item.join('');
-        coords[idx] = {start: line.indexOf('X'), end: line.lastIndexOf('X')};
+        arr[idx] = item.substring(0, item.indexOf('X')) + 'X'.repeat(item.lastIndexOf('X') - item.indexOf('X')) + item.substring(item.lastIndexOf('X'));
     })
 
-    coords.forEach((item, idx) => {
-        for (let j = item.start; j < item.end + 1; j++) {
-            arr[idx][j] = 'X';
-        }
-    })
 
     return arr;
 }
 
-const checkAvailable = (point1: Point, point2: Point, arr: string[][]) => {
-    for (let i = Math.min(point1.y, point2.y); i < Math.max(point1.y, point2.y) + 1; i++) {
-        for (let j = Math.min(point1.x, point2.x); j < Math.max(point1.x, point2.x) + 1; j++) {
-            if (arr[i][j] !== 'X') return false;
-        }
-    }
-    return true;
+const checkAvailable = (point1: Point, point2: Point, input: string[]) => {
+    let down = false;
+    let up = false;
+    let left = false;
+    let right = false;
+    const points = [point1, point2, {x: point1.x, y: point2.y}, {x: point1.x, y: point1.y}];
+    return points.every((point) => {
+        input.forEach((item) => {
+                const [x, y] = item.split(',');
+                if (+y < point.y) up = true;
+                if (+y > point.y) down = true;
+                if (+x > point.x) right = true;
+                if (+x < point.x) left = true;
+            }
+        )
+        return down && up && left && right;
+    })
+
+
 }
 
-const findResult2 = (input: string[], arr: string[][]) => {
+
+const findResult2 = (input: string[]) => {
+
     let max = 0;
     for (let i = 0; i < input.length; i++) {
         for (let j = i + 1; j < input.length; j++) {
             const [x1, y1] = input[i].split(',');
             const [x2, y2] = input[j].split(',');
-            const isAvailable = checkAvailable({x: x1, y: y1}, {x: x2, y: y2}, arr);
+            const isAvailable = checkAvailable({x: +x1, y: +y1}, {x: +x2, y: +y2}, input);
             if (isAvailable) {
                 const S = (Math.abs(+y2 - (+y1)) + 1) * (Math.abs(+x2 - (+x1)) + 1);
                 max = Math.max(max, S);
@@ -116,7 +104,7 @@ const findResult2 = (input: string[], arr: string[][]) => {
     return max;
 }
 const data = prepareInput(input);
-const arr = makeArr(data);
-
-console.log(findResult2(data, arr));
+// const arr = makeArr(data);
+// console.log(arr);
+console.log(findResult2(data));
 
