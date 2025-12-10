@@ -1,5 +1,7 @@
 import {example, input} from "./input";
 import {prepareArrayInput, prepareInput} from "../../utils/prepareInput";
+import solver from 'javascript-lp-solver';
+
 
 const minPresses = (target: number[], buttons: number[][]): number => {
     const n = target.length; // Number of lights
@@ -53,41 +55,41 @@ const findResult2 = (input: string[]) => {
         const target = targetStr.substring(1, targetStr.length-1).split(',').map(el => +el);
         const buttonsVec = buttons.map(button => button.substring(1, button.length - 1).split(',').map(el => +el));
 
-        return acc + minPressesBFS(target, buttonsVec);
+        return acc + minPressesILP(target, buttonsVec);
 
     },0)
 }
 
-const minPressesBFS = (target: number[], buttons: number[][]): number => {
-    const numCounters = target.length;
-    const startState = new Array(numCounters).fill(0);
-    const targetKey = target.join(',');
-    const visited = new Set<string>();
-    const queue: [number[], number][] = [[startState, 0]]; // [current_state, presses]
-    visited.add(startState.join(','));
-    while (queue.length > 0) {
-        const [current, presses] = queue.shift()!;
-        const currentKey = current.join(',');
-        if (currentKey === targetKey) {
-            return presses;
-        }
-        // Try pressing each button
-        for (const button of buttons) {
-            const nextState = [...current];
-            for (const counter of button) {
-                nextState[counter] += 1;
-                // Optional: Early prune if any counter exceeds target (heuristic, but may not always help)
-                if (nextState[counter] > target[counter]) break;
-            }
-            const nextKey = nextState.join(',');
-            if (!visited.has(nextKey)) {
-                visited.add(nextKey);
-                queue.push([nextState, presses + 1]);
+
+function minPressesILP(target: number[], buttons: number[][]): number {
+    const m = target.length;
+    const n = buttons.length;
+    const model = {
+        optimize: 'total', // Minimize sum(x)
+        opType: 'min',
+        constraints: {} as any,
+        variables: {} as any,
+        ints: {} as any,
+    };
+    // Constraints: Ax = b (one per counter)
+    for (let i = 0; i < m; i++) {
+        model.constraints[`c${i}`] = { equal: target[i] };
+    }
+    // Variables: x_j for each button, with coefficients for constraints
+    for (let j = 0; j < n; j++) {
+        model.variables[`x${j}`] = { total: 1 }; // Minimize sum
+        model.ints[`x${j}`] = 1; // Integer
+        for (let i = 0; i < m; i++) {
+            if (buttons[j].includes(i)) {
+                model.variables[`x${j}`][`c${i}`] = 1;
             }
         }
     }
-    return -1; // Unreachable (shouldn't happen in examples)
-
+    const result = solver.Solve(model);
+    return result.feasible ? result.result : -1;
 }
+
+
+
 console.log(findResult2(prepareInput(input)));
 
