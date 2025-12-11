@@ -1,8 +1,10 @@
 import {example, example2, input} from "./input";
-import {prepareArrayInput, prepareInput} from "../../utils/prepareInput";
+import {prepareInput} from "../../utils/prepareInput";
 
 
 type List = { [key: string]: string[] };
+
+type Cache = { [key: string]: number };
 
 const processInput = (input: string[]) => {
     const list: List = {};
@@ -26,50 +28,29 @@ const bfs = (list: List) => {
     return sum
 }
 
-const dfs = (vertex: string, list: List, path: string[]): number => {
+const dfs = (vertex: string, list: List, path: string[], cache: Cache): number => {
+    const key = `${vertex}_${path.includes('dac')}_${path.includes('fft')}`
+    if (key in cache) {
+        return cache[key]
+    }
+
     if (vertex === 'out') {
-        // Check if 'dac' and 'fft' are in the path
-        if (path.includes('dac') && path.includes('fft')) {
-            return 1;
-        }
-        return 0;
+        return path.includes('dac') && path.includes('fft') ? 1 : 0;
     }
-    let count = 0;
-    for (const child of list[vertex] || []) {
-        if (child === 'svr') continue; // Don't revisit start
-        if (path.includes(child)) continue; // Don't revisit any small cave
-        // Recurse
-        count += dfs(child, list, [...path, child]);
-    }
-    return count;
+
+    const res = list[vertex].reduce((acc, child) => {
+        return acc + dfs(child, list, [...path, child], cache);
+    }, 0)
+
+    cache[key] = res;
+    return res;
 };
 
-const findResult2 = (list: List): number => {
-    let count = 0;
-    const stack: { vertex: string; path: string[] }[] = [{ vertex: 'svr', path: ['svr'] }];
-    while (stack.length > 0) {
-        const { vertex, path } = stack.pop()!;
-        if (vertex === 'out') {
-            if (path.includes('dac') && path.includes('fft')) {
-                count++;
-                // Optional: console.log(`Valid path: [${path.join(',')}]`);
-            }
-            continue;
-        }
-        for (const child of list[vertex] || []) {
-            if (child === 'svr') continue; // Don't revisit start
-            if (path.includes(child)) continue; // Don't revisit any small cave
-            // Add to stack
-            stack.push({ vertex: child, path: [...path, child] });
-        }
-    }
-    return count;
-};
-// const findResult2 = (list: List) => {
-//     return dfs('svr', list, ['svr']);
-// }
+const findResult2 = (list: List) => {
+    return dfs('svr', list, ['svr'], {});
+}
+
 
 const list = processInput(prepareInput(input));
 
 console.log(findResult2(list));
-
