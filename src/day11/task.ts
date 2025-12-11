@@ -1,6 +1,6 @@
 import {example, example2, input} from "./input";
 import {prepareArrayInput, prepareInput} from "../../utils/prepareInput";
-import solver from 'javascript-lp-solver';
+
 
 type List = { [key: string]: string[] };
 
@@ -46,20 +46,22 @@ const bfs = (list: List) => {
     return sum
 }
 
-const dfs = (vertex: string, list: List, path: string[]): number => {
+const dfs = (vertex: string, list: List, path: string[], visited: { [key: string]: boolean }): number => {
 
+    visited[vertex] = true;
+    console.log(vertex);
     if (list[vertex].includes('out')) {
         if (path.includes('dac') && path.includes('fft'))
             return 1;
         return 0;
     }
 
-    return list[vertex].reduce((acc, child) => acc + dfs(child, list, [...path, child]), 0)
+    return list[vertex].filter(child => !visited[child]).reduce((acc, child) => acc + dfs(child, list, [...path, child], visited), 0)
 
 }
 
-const findResult2 = (list:List) => {
-    return dfs('svr', list, ['svr']);
+const findResult2 = (list: List) => {
+    return dfs('svr', list, ['svr'], {});
 }
 
 const list = processInput(prepareInput(input));
